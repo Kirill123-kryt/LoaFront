@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoaFront</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#edf3ff;font-family:Arial,sans-serif}
+header{padding:20px;text-align:center;background:#121b30;border-bottom:1px solid #33415f}
+h1{margin:0;color:#64a5ff;font-size:32px}
+header p{color:#9aabc8}
+main{max-width:1000px;margin:auto;padding:15px}
+.stats{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:15px 0}
+.stat{background:#17233b;padding:12px 18px;border-radius:12px}
+button{cursor:pointer;color:white;border:0;border-radius:9px;padding:12px;background:#263650;font-weight:bold}
+.modes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+button.active{outline:2px solid white}
+.blue{background:#216ce0}
+.red{background:#d83b58}
+.neutral{background:#56637a}
+.map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.region{min-height:95px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;padding:8px;overflow-wrap:anywhere}
+.region span{font-size:12px}
+h2{text-align:center}
+#message{text-align:center;color:#a8bad8;min-height:20px}
+footer{text-align:center;color:#7182a1;padding:25px;font-size:12px}
+@media(min-width:700px){.map{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(max-width:360px){.map{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header>
+<h1>LoaFront</h1>
+<p>КАРТА КОНТРОЛЯ РЕГИОНОВ</p>
+</header>
+<main>
+<h2>Карта регионов</h2>
+<div class="stats">
+<div class="stat">🔵 Синие: <b id="b">0</b></div>
+<div class="stat">🔴 Красные: <b id="r">0</b></div>
+<div class="stat">⚪ Нейтральные: <b id="n">0</b></div>
+</div>
+<div class="modes">
+<button class="blue active" onclick="choose('blue',this)">🔵 Синие</button>
+<button class="red" onclick="choose('red',this)">🔴 Красные</button>
+<button class="neutral" onclick="choose('neutral',this)">⚪ Нейтральные</button>
+</div>
+<div id="message">Выбери сторону, затем нажми на регион!</div>
+<div class="map" id="map"></div>
+<div class="modes">
+<button onclick="undo()">↶ Отменить</button>
+<button onclick="resetMap()">Сбросить карту</button>
+</div>
+</main>
+<footer>LoaFront • Версия 1.0 • Телефон и компьютер</footer>
+<script>
+const names=[
+"Северный край","Лесогорье","Верхние озёра","Старый порт",
+"Сосновый округ","Полярный рубеж","Западные холмы","Каменск",
+"Новоград","Речной край","Восточная долина","Туманный мыс",
+"Зелёные поля","Центральный округ","Столичный регион","Красный перевал",
+"Янтарный берег","Морские ворота","Южные степи","Солнечный край",
+"Серебряные горы","Большая равнина","Нижний порт","Южный рубеж"
+];
+const initial=names.map((_,i)=>i%3===0?"neutral":i%2===0?"red":"blue");
+let state;
+try{
+ const saved=JSON.parse(localStorage.getItem("loafront"));
+ state=Array.isArray(saved)&&saved.length===names.length?saved:initial.slice();
+}catch(e){state=initial.slice();}
+let mode="blue",history=[];
+function choose(m,btn){
+ mode=m;
+ document.querySelectorAll(".modes button").forEach(x=>x.classList.remove("active"));
+ btn.classList.add("active");
+ document.getElementById("message").textContent="Теперь нажимай на регион!";
+}
+function draw(){
+ const map=document.getElementById("map");
+ map.innerHTML="";
+ names.forEach((name,i)=>{
+  const btn=document.createElement("button");
+  btn.className="region "+state[i];
+  const title=document.createElement("strong");
+  title.textContent=name;
+  const status=document.createElement("span");
+  status.textContent=state[i]==="blue"?"Контроль синих":state[i]==="red"?"Контроль красных":"Нейтральный";
+  btn.append(title,status);
+  btn.onclick=()=>{
+   if(state[i]===mode){
+    document.getElementById("message").textContent="Этот регион уже принадлежит выбранной стороне.";
+    return;
+   }
+   history.push(state.slice());
+   if(history.length>50)history.shift();
+   state[i]=mode;
+   save();
+   draw();
+   document.getElementById("message").textContent="Контроль региона изменён!";
+  };
+  map.appendChild(btn);
+ });
+ document.getElementById("b").textContent=state.filter(x=>x==="blue").length;
+ document.getElementById("r").textContent=state.filter(x=>x==="red").length;
+ document.getElementById("n").textContent=state.filter(x=>x==="neutral").length;
+}
+function save(){
+ try{localStorage.setItem("loafront",JSON.stringify(state));}catch(e){}
+}
+function undo(){
+ if(!history.length){
+  document.getElementById("message").textContent="Пока нечего отменять.";
+  return;
+ }
+ state=history.pop();
+ save();draw();
+ document.getElementById("message").textContent="Изменение отменено.";
+}
+function resetMap(){
+ if(confirm("Точно сбросить карту?")){
+  history.push(state.slice());
+  state=initial.slice();save();draw();
+  document.getElementById("message").textContent="Карта сброшена.";
+ }
+}
+draw();
+</script>
+</body>
+</html>
