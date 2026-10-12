@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoaFront</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#edf3ff;font-family:Arial,sans-serif}
+header{padding:20px;text-align:center;background:#121b30}
+h1{margin:0;color:#64a5ff;font-size:32px}
+p{color:#a9b8d4}
+main{max-width:1000px;margin:auto;padding:15px}
+.stats,.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:15px 0}
+.stat{background:#17233b;padding:12px;border-radius:10px}
+button{cursor:pointer;color:white;border:0;border-radius:9px;padding:12px;background:#263650;font-weight:bold}
+.blue{background:#216ce0}
+.red{background:#d83b58}
+.neutral{background:#56637a}
+.active{outline:2px solid white}
+.map{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.region{min-height:90px;overflow-wrap:anywhere}
+h2{text-align:center}
+#msg{text-align:center;min-height:20px;color:#a9b8d4}
+@media(min-width:700px){.map{grid-template-columns:repeat(6,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header>
+<h1>LoaFront</h1>
+<p>КАРТА КОНТРОЛЯ РЕГИОНОВ</p>
+</header>
+<main>
+<h2>Карта регионов</h2>
+<div class="stats">
+<div class="stat">🔵 Синие: <b id="b">0</b></div>
+<div class="stat">🔴 Красные: <b id="r">0</b></div>
+<div class="stat">⚪ Нейтральные: <b id="n">0</b></div>
+</div>
+<div class="controls">
+<button class="blue active" onclick="mode='blue';activate(this)">🔵 Синие</button>
+<button class="red" onclick="mode='red';activate(this)">🔴 Красные</button>
+<button class="neutral" onclick="mode='neutral';activate(this)">⚪ Нейтральные</button>
+</div>
+<div id="msg">Выбери сторону и нажми на регион!</div>
+<div id="map" class="map"></div>
+<div class="controls">
+<button onclick="undo()">↶ Отменить</button>
+<button onclick="resetMap()">Сбросить карту</button>
+</div>
+</main>
+<script>
+const names=[
+"Северный край","Лесогорье","Верхние озёра","Старый порт",
+"Сосновый округ","Полярный рубеж","Западные холмы","Каменск",
+"Новоград","Речной край","Восточная долина","Туманный мыс",
+"Зелёные поля","Центральный округ","Столица","Красный перевал",
+"Янтарный берег","Морские ворота","Южные степи","Солнечный край",
+"Серебряные горы","Большая равнина","Нижний порт","Южный рубеж"
+];
+const initial=names.map((_,i)=>i%3===0?"neutral":i%2===0?"red":"blue");
+let state=initial.slice(),mode="blue",history=[];
+try{
+ const saved=JSON.parse(localStorage.getItem("loafront"));
+ if(Array.isArray(saved)&&saved.length===names.length)state=saved;
+}catch(e){}
+function activate(btn){
+ document.querySelectorAll(".controls button").forEach(b=>b.classList.remove("active"));
+ btn.classList.add("active");
+}
+function save(){
+ try{localStorage.setItem("loafront",JSON.stringify(state))}catch(e){}
+}
+function draw(){
+ const map=document.getElementById("map");map.innerHTML="";
+ names.forEach((name,i)=>{
+  const btn=document.createElement("button");
+  btn.className="region "+state[i];
+  btn.textContent=name+"\n"+(state[i]==="blue"?"🔵 Синие":state[i]==="red"?"🔴 Красные":"⚪ Нейтральные");
+  btn.onclick=()=>{
+   if(state[i]===mode){document.getElementById("msg").textContent="Этот регион уже у этой стороны.";return}
+   history.push(state.slice());if(history.length>50)history.shift();
+   state[i]=mode;save();draw();
+   document.getElementById("msg").textContent="Регион захвачен!";
+  };
+  map.appendChild(btn);
+ });
+ document.getElementById("b").textContent=state.filter(x=>x==="blue").length;
+ document.getElementById("r").textContent=state.filter(x=>x==="red").length;
+ document.getElementById("n").textContent=state.filter(x=>x==="neutral").length;
+}
+function undo(){
+ if(!history.length){document.getElementById("msg").textContent="Нечего отменять.";return}
+ state=history.pop();save();draw();
+}
+function resetMap(){
+ if(confirm("Сбросить карту?")){history.push(state.slice());state=initial.slice();save();draw()}
+}
+draw();
+</script>
+</body>
+</html>
