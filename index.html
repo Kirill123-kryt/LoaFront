@@ -7,124 +7,318 @@
 <title>LoaFront</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0b1020;color:#edf3ff;font-family:Arial,sans-serif}
-header{padding:20px;text-align:center;background:#121b30;border-bottom:1px solid #33415f}
-h1{margin:0;color:#64a5ff;font-size:32px}
-header p{color:#9aabc8}
-main{max-width:1000px;margin:auto;padding:15px}
-.stats{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:15px 0}
-.stat{background:#17233b;padding:12px 18px;border-radius:12px}
-button{cursor:pointer;color:white;border:0;border-radius:9px;padding:12px;background:#263650;font-weight:bold}
-.modes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px 0}
-button.active{outline:2px solid white}
-.blue{background:#216ce0}
-.red{background:#d83b58}
-.neutral{background:#56637a}
-.map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.region{min-height:95px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;padding:8px;overflow-wrap:anywhere}
-.region span{font-size:12px}
-h2{text-align:center}
-#message{text-align:center;color:#a8bad8;min-height:20px}
-footer{text-align:center;color:#7182a1;padding:25px;font-size:12px}
-@media(min-width:700px){.map{grid-template-columns:repeat(6,minmax(0,1fr))}}
-@media(max-width:360px){.map{grid-template-columns:repeat(2,minmax(0,1fr))}}
+body{margin:0;background:#10141b;color:#e8edf5;font:14px Arial,sans-serif}
+header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#191f29;border-bottom:1px solid #303846}
+.logo{font-size:23px;font-weight:bold;letter-spacing:1px;color:#80b5ff}
+.status{color:#9da9b9;font-size:12px}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 58px)}
+aside{background:#171d26;border-right:1px solid #303846;padding:14px}
+h3{font-size:12px;color:#98a8bd;text-transform:uppercase;letter-spacing:1px;margin:10px 0}
+button,select{background:#242d3a;color:#edf3fc;border:1px solid #3b4759;border-radius:6px;padding:10px;cursor:pointer}
+button:hover{background:#344257}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.tools button.active{outline:2px solid #80b5ff;background:#30445e}
+.wide{width:100%;margin-top:7px}
+label{display:block;color:#b5c0cf;margin:9px 0 5px}
+select{width:100%}
+.team{display:flex;align-items:center;gap:8px;padding:9px;margin:5px 0;border-radius:6px;background:#202733;cursor:pointer}
+.dot{width:12px;height:12px;border-radius:50%}
+.blue{background:#3988f5}.red{background:#ed525b}.green{background:#36bd86}.neutral{background:#778394}
+main{min-width:0;padding:12px;display:flex;flex-direction:column;gap:10px}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{background:#1b222d;padding:10px 13px;border:1px solid #303846;border-radius:7px;flex:1;min-width:100px}
+.stat strong{display:block;font-size:20px;margin-top:5px}
+.mapbox{position:relative;flex:1;min-height:490px;background:#111a25;border:1px solid #303846;border-radius:9px;overflow:hidden}
+#map{width:100%;height:100%;min-height:490px;display:block;touch-action:manipulation}
+.gridline{stroke:#24303e;stroke-width:1}
+.region{stroke:#101720;stroke-width:3;cursor:pointer;transition:fill .12s}
+.region:hover{stroke:#fff;stroke-width:4}
+.region.selected{stroke:#fff;stroke-width:5}
+.reglabel{fill:#fff;stroke:#111820;stroke-width:3;paint-order:stroke;stroke-linejoin:round;font-size:12px;text-anchor:middle;pointer-events:none;font-weight:bold}
+.map-title{position:absolute;left:15px;top:12px;color:#d3dfed;background:#192331dd;padding:8px 10px;border-radius:5px;pointer-events:none}
+.map-hint{position:absolute;bottom:10px;left:10px;color:#bdc9d8;background:#192331dd;padding:8px;border-radius:5px;pointer-events:none;font-size:12px}
+#notice{color:#9da9b9;font-size:12px}
+@media(max-width:650px){
+ .layout{grid-template-columns:1fr}
+ aside{border-right:0;border-bottom:1px solid #303846;padding:10px}
+ aside .desktop-title{display:none}
+ .tools{grid-template-columns:repeat(4,1fr)}
+ .tools button{padding:9px 3px;font-size:12px}
+ .sidebar-bottom{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .sidebar-bottom button{margin:0}
+ main{padding:8px}
+ .mapbox,#map{min-height:60vh}
+ header{padding:0 10px}
+}
 </style>
 </head>
 <body>
 <header>
-<h1>LoaFront</h1>
-<p>КАРТА КОНТРОЛЯ РЕГИОНОВ</p>
+ <div class="logo">LoaFront</div>
+ <div class="status">MAP CONTROL SYSTEM · <span id="saveStatus">ГОТОВО</span></div>
 </header>
+
+<div class="layout">
+<aside>
+ <h3 class="desktop-title">Инструменты карты</h3>
+ <div class="tools">
+  <button class="active" data-tool="paint">🎨 Цвет</button>
+  <button data-tool="select">👆 Выбор</button>
+  <button data-tool="label">🏷️ Название</button>
+  <button data-tool="info">ℹ️ Инфо</button>
+ </div>
+
+ <h3>Команда</h3>
+ <div class="team" data-team="blue"><span class="dot blue"></span> Синяя</div>
+ <div class="team" data-team="red"><span class="dot red"></span> Красная</div>
+ <div class="team" data-team="green"><span class="dot green"></span> Зелёная</div>
+ <div class="team" data-team="neutral"><span class="dot neutral"></span> Нейтральная</div>
+
+ <h3>Сценарий</h3>
+ <label for="scenario">Название сценария</label>
+ <input id="scenario" value="Новая кампания" style="width:100%;padding:10px;background:#242d3a;color:white;border:1px solid #3b4759;border-radius:6px">
+ <div class="sidebar-bottom">
+  <button class="wide" id="undo">↶ Отменить</button>
+  <button class="wide" id="save">💾 Сохранить</button>
+  <button class="wide" id="export">Экспорт JSON</button>
+  <button class="wide" id="import">Импорт JSON</button>
+  <button class="wide" id="reset">Сброс карты</button>
+ </div>
+ <input type="file" id="file" accept=".json,application/json" hidden>
+</aside>
+
 <main>
-<h2>Карта регионов</h2>
-<div class="stats">
-<div class="stat">🔵 Синие: <b id="b">0</b></div>
-<div class="stat">🔴 Красные: <b id="r">0</b></div>
-<div class="stat">⚪ Нейтральные: <b id="n">0</b></div>
-</div>
-<div class="modes">
-<button class="blue active" onclick="choose('blue',this)">🔵 Синие</button>
-<button class="red" onclick="choose('red',this)">🔴 Красные</button>
-<button class="neutral" onclick="choose('neutral',this)">⚪ Нейтральные</button>
-</div>
-<div id="message">Выбери сторону, затем нажми на регион!</div>
-<div class="map" id="map"></div>
-<div class="modes">
-<button onclick="undo()">↶ Отменить</button>
-<button onclick="resetMap()">Сбросить карту</button>
-</div>
+ <div class="stats">
+  <div class="stat">Всего регионов<strong id="total">24</strong></div>
+  <div class="stat">🔵 Синяя<strong id="countBlue">0</strong></div>
+  <div class="stat">🔴 Красная<strong id="countRed">0</strong></div>
+  <div class="stat">🟢 Зелёная<strong id="countGreen">0</strong></div>
+ </div>
+ <div class="mapbox">
+  <div class="map-title">ОПЕРАТИВНАЯ КАРТА</div>
+  <svg id="map" viewBox="0 0 900 650" preserveAspectRatio="xMidYMid meet" aria-label="Карта регионов">
+   <defs>
+    <pattern id="grid" width="35" height="35" patternUnits="userSpaceOnUse">
+     <path d="M35 0H0V35" fill="none" class="gridline"/>
+    </pattern>
+   </defs>
+   <rect width="900" height="650" fill="#131c28"/>
+   <rect width="900" height="650" fill="url(#grid)"/>
+   <g id="regions"></g>
+   <text x="450" y="625" text-anchor="middle" fill="#66788d" font-size="12">LoaFront • WORLD MAP EDITOR</text>
+  </svg>
+  <div class="map-hint">Нажимай на регион, чтобы изменить карту</div>
+ </div>
+ <div id="notice">Сценарий сохраняется в браузере этого устройства.</div>
 </main>
-<footer>LoaFront • Версия 1.0 • Телефон и компьютер</footer>
+</div>
+
 <script>
+const NS='http://www.w3.org/2000/svg';
+const colors={blue:'#2879d8',red:'#d83e49',green:'#269b72',neutral:'#475363'};
 const names=[
-"Северный край","Лесогорье","Верхние озёра","Старый порт",
-"Сосновый округ","Полярный рубеж","Западные холмы","Каменск",
-"Новоград","Речной край","Восточная долина","Туманный мыс",
-"Зелёные поля","Центральный округ","Столичный регион","Красный перевал",
-"Янтарный берег","Морские ворота","Южные степи","Солнечный край",
-"Серебряные горы","Большая равнина","Нижний порт","Южный рубеж"
+'Северный','Верхний','Восточный','Приозёрный',
+'Западный','Центральный','Речной','Горный',
+'Северо-Западный','Старый город','Степной','Лесной',
+'Пограничный','Южный','Промышленный','Пригородный',
+'Долинный','Нижний','Равнинный','Юго-Восточный',
+'Морской','Юго-Западный','Крайний','Столичный'
 ];
-const initial=names.map((_,i)=>i%3===0?"neutral":i%2===0?"red":"blue");
-let state;
+
+// Карта вымышленной страны с 24 отдельными областями.
+const shapes=[
+[[150,70],[245,55],[278,95],[252,145],[172,150],[130,115]],
+[[245,55],[340,70],[365,120],[320,160],[252,145],[278,95]],
+[[340,70],[435,95],[455,145],[400,175],[320,160],[365,120]],
+[[435,95],[530,75],[570,120],[540,165],[455,145]],
+[[95,145],[172,150],[190,205],[145,240],[75,205]],
+[[172,150],[252,145],[280,200],[235,240],[190,205]],
+[[252,145],[320,160],[335,215],[280,200]],
+[[320,160],[400,175],[415,220],[350,245],[335,215]],
+[[75,205],[145,240],[155,300],[100,330],[55,270]],
+[[145,240],[190,205],[235,240],[225,295],[155,300]],
+[[235,240],[280,200],[335,215],[350,270],[285,300],[225,295]],
+[[335,215],[415,220],[435,275],[385,305],[350,270]],
+[[55,270],[100,330],[140,365],[95,405],[40,350]],
+[[100,330],[155,300],[225,295],[235,355],[180,385],[140,365]],
+[[225,295],[285,300],[305,355],[235,355]],
+[[285,300],[350,270],[385,305],[375,360],[305,355]],
+[[385,305],[435,275],[475,320],[450,370],[375,360]],
+[[140,365],[180,385],[205,435],[150,470],[95,405]],
+[[180,385],[235,355],[305,355],[315,415],[260,450],[205,435]],
+[[305,355],[375,360],[390,415],[315,415]],
+[[375,360],[450,370],[480,420],[430,455],[390,415]],
+[[150,470],[205,435],[260,450],[275,505],[215,535],[165,520]],
+[[260,450],[315,415],[390,415],[430,455],[385,510],[275,505]],
+[[430,455],[480,420],[520,465],[475,515],[385,510]]
+];
+
+const centers=[
+[200,105],[305,105],[390,125],[500,120],
+[125,185],[215,185],[290,175],[370,195],
+[95,270],[180,260],[280,255],[380,265],
+[90,350],[175,330],[270,325],[340,325],
+[420,335],[165,420],[250,400],[345,385],
+[430,405],[210,485],[330,465],[440,470]
+];
+
+let state={owners:{},scenario:'Новая кампания'};
+let history=[];
+let activeTeam='blue';
+let tool='paint';
+let selected=null;
+
 try{
- const saved=JSON.parse(localStorage.getItem("loafront"));
- state=Array.isArray(saved)&&saved.length===names.length?saved:initial.slice();
-}catch(e){state=initial.slice();}
-let mode="blue",history=[];
-function choose(m,btn){
- mode=m;
- document.querySelectorAll(".modes button").forEach(x=>x.classList.remove("active"));
- btn.classList.add("active");
- document.getElementById("message").textContent="Теперь нажимай на регион!";
+ const old=JSON.parse(localStorage.getItem('loafront-original'));
+ if(old && old.owners)state=old;
+}catch(e){}
+
+function persist(){
+ try{
+  localStorage.setItem('loafront-original',JSON.stringify(state));
+  document.getElementById('saveStatus').textContent='СОХРАНЕНО';
+ }catch(e){
+  document.getElementById('saveStatus').textContent='ОШИБКА';
+ }
 }
+
+function pushHistory(){
+ history.push(JSON.stringify(state));
+ if(history.length>50)history.shift();
+}
+
+function el(tag,attrs={}){
+ const n=document.createElementNS(NS,tag);
+ Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));
+ return n;
+}
+
 function draw(){
- const map=document.getElementById("map");
- map.innerHTML="";
+ const root=document.getElementById('regions');
+ root.replaceChildren();
  names.forEach((name,i)=>{
-  const btn=document.createElement("button");
-  btn.className="region "+state[i];
-  const title=document.createElement("strong");
-  title.textContent=name;
-  const status=document.createElement("span");
-  status.textContent=state[i]==="blue"?"Контроль синих":state[i]==="red"?"Контроль красных":"Нейтральный";
-  btn.append(title,status);
-  btn.onclick=()=>{
-   if(state[i]===mode){
-    document.getElementById("message").textContent="Этот регион уже принадлежит выбранной стороне.";
-    return;
-   }
-   history.push(state.slice());
-   if(history.length>50)history.shift();
-   state[i]=mode;
-   save();
-   draw();
-   document.getElementById("message").textContent="Контроль региона изменён!";
-  };
-  map.appendChild(btn);
+  const owner=state.owners[name]||'neutral';
+  const poly=el('polygon',{
+   points:shapes[i].map(p=>p.join(',')).join(' '),
+   fill:colors[owner],
+   class:'region'+(selected===name?' selected':'')
+  });
+  poly.addEventListener('click',()=>handleRegion(name,i));
+  root.appendChild(poly);
+
+  const [x,y]=centers[i];
+  const label=el('text',{x,y,class:'reglabel'});
+  label.textContent=name;
+  root.appendChild(label);
  });
- document.getElementById("b").textContent=state.filter(x=>x==="blue").length;
- document.getElementById("r").textContent=state.filter(x=>x==="red").length;
- document.getElementById("n").textContent=state.filter(x=>x==="neutral").length;
+ updateStats();
+ document.getElementById('scenario').value=state.scenario||'Новая кампания';
 }
-function save(){
- try{localStorage.setItem("loafront",JSON.stringify(state));}catch(e){}
-}
-function undo(){
- if(!history.length){
-  document.getElementById("message").textContent="Пока нечего отменять.";
-  return;
+
+function handleRegion(name,i){
+ selected=name;
+ if(tool==='paint'){
+  pushHistory();
+  state.owners[name]=activeTeam;
+  persist();
+ }else if(tool==='label'){
+  const newName=prompt('Новое название региона:',name);
+  if(newName && newName.trim()){
+   pushHistory();
+   names[i]=newName.trim();
+   const oldName=name;
+   if(state.owners[oldName]){
+    state.owners[newName.trim()]=state.owners[oldName];
+    delete state.owners[oldName];
+   }
+   persist();
+  }
+ }else if(tool==='info'){
+  alert('Регион: '+name+'\nВладелец: '+(state.owners[name]||'neutral'));
  }
- state=history.pop();
- save();draw();
- document.getElementById("message").textContent="Изменение отменено.";
+ draw();
 }
-function resetMap(){
- if(confirm("Точно сбросить карту?")){
-  history.push(state.slice());
-  state=initial.slice();save();draw();
-  document.getElementById("message").textContent="Карта сброшена.";
+
+function updateStats(){
+ document.getElementById('total').textContent=names.length;
+ ['blue','red','green'].forEach(team=>{
+  document.getElementById('count'+team[0].toUpperCase()+team.slice(1)).textContent=
+   names.filter(n=>(state.owners[n]||'neutral')===team).length;
+ });
+}
+
+document.querySelectorAll('[data-team]').forEach(button=>{
+ button.addEventListener('click',()=>{
+  activeTeam=button.dataset.team;
+  document.querySelectorAll('[data-team]').forEach(x=>x.style.outline='none');
+  button.style.outline='2px solid #80b5ff';
+ });
+});
+
+document.querySelectorAll('[data-tool]').forEach(button=>{
+ button.addEventListener('click',()=>{
+  tool=button.dataset.tool;
+  document.querySelectorAll('[data-tool]').forEach(x=>x.classList.remove('active'));
+  button.classList.add('active');
+ });
+});
+
+document.getElementById('scenario').addEventListener('change',e=>{
+ state.scenario=e.target.value;
+ persist();
+});
+
+document.getElementById('save').onclick=()=>{
+ state.scenario=document.getElementById('scenario').value;
+ persist();
+ document.getElementById('notice').textContent='Сценарий сохранён на этом устройстве.';
+};
+
+document.getElementById('undo').onclick=()=>{
+ if(!history.length)return alert('Пока нечего отменять.');
+ state=JSON.parse(history.pop());
+ persist();
+ draw();
+};
+
+document.getElementById('reset').onclick=()=>{
+ if(!confirm('Сбросить все захваты?'))return;
+ pushHistory();
+ state.owners={};
+ persist();
+ draw();
+};
+
+document.getElementById('export').onclick=()=>{
+ state.scenario=document.getElementById('scenario').value;
+ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='loafront-scenario.json';
+ a.click();
+ URL.revokeObjectURL(a.href);
+};
+
+document.getElementById('import').onclick=()=>{
+ document.getElementById('file').click();
+};
+
+document.getElementById('file').onchange=async e=>{
+ const file=e.target.files[0];
+ if(!file)return;
+ try{
+  const imported=JSON.parse(await file.text());
+  if(!imported.owners)throw new Error();
+  pushHistory();
+  state=imported;
+  persist();
+  draw();
+ }catch(err){
+  alert('Не удалось прочитать сценарий JSON.');
  }
-}
+ e.target.value='';
+};
+
 draw();
 </script>
 </body>
